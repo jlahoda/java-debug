@@ -22,6 +22,9 @@ public class Messages {
         public int seq;
         public String type;
 
+        public ProtocolMessage() {
+        }
+
         public ProtocolMessage(String type) {
             this.type = type;
         }
@@ -30,6 +33,9 @@ public class Messages {
     public static class Request extends ProtocolMessage {
         public String command;
         public JsonObject arguments;
+
+        public Request() {
+        }
 
         /**
          * Constructor.
