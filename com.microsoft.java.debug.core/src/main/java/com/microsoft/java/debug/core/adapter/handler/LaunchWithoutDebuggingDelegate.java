@@ -25,6 +25,7 @@ import com.microsoft.java.debug.core.Configuration;
 import com.microsoft.java.debug.core.DebugException;
 import com.microsoft.java.debug.core.adapter.ErrorCode;
 import com.microsoft.java.debug.core.adapter.IDebugAdapterContext;
+import com.microsoft.java.debug.core.adapter.IExecuteProvider;
 import com.microsoft.java.debug.core.protocol.Events;
 import com.microsoft.java.debug.core.protocol.JsonUtils;
 import com.microsoft.java.debug.core.protocol.Messages.Request;
@@ -49,13 +50,19 @@ public class LaunchWithoutDebuggingDelegate implements ILaunchDelegate {
     @Override
     public Process launch(LaunchArguments launchArguments, IDebugAdapterContext context)
             throws IOException, IllegalConnectorArgumentsException, VMStartException {
-        String[] cmds = LaunchRequestHandler.constructLaunchCommands(launchArguments, false, null);
-        File workingDir = null;
-        if (launchArguments.cwd != null && Files.isDirectory(Paths.get(launchArguments.cwd))) {
-            workingDir = new File(launchArguments.cwd);
+        Process debuggeeProcess;
+        IExecuteProvider execution = context.getProvider(IExecuteProvider.class);
+        if (execution == null) {
+            String[] cmds = LaunchRequestHandler.constructLaunchCommands(launchArguments, false, null);
+            File workingDir = null;
+            if (launchArguments.cwd != null && Files.isDirectory(Paths.get(launchArguments.cwd))) {
+                workingDir = new File(launchArguments.cwd);
+            }
+            debuggeeProcess = Runtime.getRuntime().exec(cmds, LaunchRequestHandler.constructEnvironmentVariables(launchArguments),
+                    workingDir);
+        } else {
+            debuggeeProcess = execution.launch(launchArguments);
         }
-        Process debuggeeProcess = Runtime.getRuntime().exec(cmds, LaunchRequestHandler.constructEnvironmentVariables(launchArguments),
-                workingDir);
         new Thread() {
             public void run() {
                 try {
